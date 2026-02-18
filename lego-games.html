@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LEGO® Games — Steam Collection</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Bangers&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --lego-yellow: #FFD700;
+      --lego-red: #DA291C;
+      --lego-blue: #006DB7;
+      --lego-green: #00A650;
+      --lego-dark: #1a1a1a;
+      --lego-black: #0d0d0d;
+      --lego-white: #FFFFFF;
+      --lego-orange: #FF6B00;
+      --lego-stud-size: 28px;
+      --card-radius: 12px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--lego-black);
+      color: var(--lego-white);
+      overflow-x: hidden;
+      cursor: default;
+    }
+
+    /* ─── LEGO STUD PATTERN ─── */
+    .stud-pattern {
+      background-color: var(--lego-yellow);
+      background-image:
+        radial-gradient(circle at 14px 14px, rgba(0,0,0,0.18) 10px, transparent 11px);
+      background-size: var(--lego-stud-size) var(--lego-stud-size);
+    }
+
+    .stud-pattern-red {
+      background-color: var(--lego-red);
+      background-image:
+        radial-gradient(circle at 14px 14px, rgba(0,0,0,0.18) 10px, transparent 11px);
+      background-size: var(--lego-stud-size) var(--lego-stud-size);
+    }
+
+    .stud-pattern-blue {
+      background-color: var(--lego-blue);
+      background-image:
+        radial-gradient(circle at 14px 14px, rgba(255,255,255,0.15) 10px, transparent 11px);
+      background-size: var(--lego-stud-size) var(--lego-stud-size);
+    }
+
+    /* ─── NAVBAR ─── */
+    nav {
+      position: fixed; top: 0; width: 100%; z-index: 1000;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px;
+      height: 64px;
+      background: var(--lego-red);
+      box-shadow: 0 4px 0 #9c1a12, 0 8px 30px rgba(0,0,0,0.5);
+    }
+    nav::after {
+      content: '';
+      position: absolute; bottom: -8px; left: 0; right: 0; height: 8px;
+      background: repeating-linear-gradient(90deg, #9c1a12 0 20px, #8b170f 20px 40px);
+    }
+    .nav-logo {
+      font-family: 'Bangers', cursive;
+      font-size: 2.2rem;
+      letter-spacing: 4px;
+      color: var(--lego-yellow);
+      text-shadow: 3px 3px 0 #9c1a12, -1px -1px 0 rgba(0,0,0,0.3);
+    }
+    .nav-links { display: flex; gap: 32px; }
+    .nav-links a {
+      color: var(--lego-white);
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--lego-yellow); }
+
+    /* ─── HERO ─── */
+    #hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      position: relative;
+      overflow: hidden;
+      background: var(--lego-dark);
+      padding: 100px 40px 60px;
+    }
+
+    /* Bricks background */
+    .hero-bricks {
+      position: absolute; inset: 0; z-index: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 6px;
+      padding: 6px;
+      opacity: 0.07;
+      pointer-events: none;
+    }
+    .hero-brick {
+      border-radius: 4px;
+      animation: brickPulse 3s ease-in-out infinite;
+    }
+    .hero-brick:nth-child(odd) { background: var(--lego-yellow); animation-delay: calc(var(--i) * 0.1s); }
+    .hero-brick:nth-child(even) { background: var(--lego-red); animation-delay: calc(var(--i) * 0.15s); }
+    .hero-brick:nth-child(3n) { background: var(--lego-blue); }
+    .hero-brick:nth-child(5n) { background: var(--lego-green); }
+
+    @keyframes brickPulse {
+      0%, 100% { opacity: 0.4; transform: scaleY(1); }
+      50% { opacity: 1; transform: scaleY(1.05); }
+    }
+
+    /* Floating bricks */
+    .float-bricks {
+      position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+    }
+    .fbrick {
+      position: absolute;
+      width: 40px; height: 24px;
+      border-radius: 4px;
+      box-shadow: inset 0 -4px 0 rgba(0,0,0,0.3), 0 0 0 2px rgba(0,0,0,0.2);
+      animation: floatUp linear infinite;
+      opacity: 0;
+    }
+    .fbrick::before {
+      content: '';
+      position: absolute; top: 4px; left: 50%; transform: translateX(-50%);
+      width: 14px; height: 14px; border-radius: 50%;
+      background: inherit; filter: brightness(1.3);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    }
+    @keyframes floatUp {
+      0% { opacity: 0; transform: translateY(100vh) rotate(0deg); }
+      10% { opacity: 0.7; }
+      90% { opacity: 0.5; }
+      100% { opacity: 0; transform: translateY(-100px) rotate(720deg); }
+    }
+
+    .hero-content { position: relative; z-index: 1; text-align: center; max-width: 900px; }
+
+    .hero-badge {
+      display: inline-block;
+      background: var(--lego-yellow);
+      color: var(--lego-dark);
+      font-family: 'Bangers', cursive;
+      font-size: 0.9rem;
+      letter-spacing: 3px;
+      padding: 6px 20px;
+      border-radius: 4px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+      animation: badgeBounce 2s ease-in-out infinite;
+    }
+    @keyframes badgeBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .hero-title {
+      font-family: 'Bangers', cursive;
+      font-size: clamp(4rem, 10vw, 9rem);
+      line-height: 0.9;
+      color: var(--lego-yellow);
+      text-shadow:
+        6px 6px 0 var(--lego-red),
+        12px 12px 0 rgba(0,0,0,0.3);
+      letter-spacing: 6px;
+      animation: titleSlam 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    }
+    @keyframes titleSlam {
+      from { opacity: 0; transform: scale(2) rotate(-5deg); }
+      to { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+
+    .hero-subtitle {
+      font-family: 'Bangers', cursive;
+      font-size: clamp(1.5rem, 3vw, 2.8rem);
+      color: var(--lego-white);
+      letter-spacing: 4px;
+      margin-top: 12px;
+      text-shadow: 3px 3px 0 var(--lego-blue);
+      animation: titleSlam 0.8s 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    }
+
+    .hero-description {
+      margin-top: 40px;
+      max-width: 720px;
+      margin-left: auto; margin-right: auto;
+      line-height: 1.8;
+      font-size: 1.1rem;
+      color: rgba(255,255,255,0.85);
+      background: rgba(0,0,0,0.4);
+      border: 2px solid rgba(255,215,0,0.2);
+      border-radius: var(--card-radius);
+      padding: 28px 36px;
+      backdrop-filter: blur(10px);
+      animation: fadeUp 1s 0.6s both;
+    }
+    .hero-description strong { color: var(--lego-yellow); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-stats {
+      display: flex; gap: 32px; justify-content: center; margin-top: 40px;
+      flex-wrap: wrap;
+      animation: fadeUp 1s 0.9s both;
+    }
+    .stat-brick {
+      background: var(--lego-red);
+      border-radius: 8px;
+      padding: 16px 28px;
+      box-shadow: 0 6px 0 #9c1a12, 0 10px 20px rgba(0,0,0,0.3);
+      position: relative;
+      transition: transform 0.2s;
+    }
+    .stat-brick:hover { transform: translateY(-4px); }
+    .stat-brick::before {
+      content: '';
+      position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+      width: 20px; height: 10px; border-radius: 4px 4px 0 0;
+      background: var(--lego-red); filter: brightness(1.2);
+      box-shadow: 0 -4px 0 rgba(0,0,0,0.2);
+    }
+    .stat-number { font-family: 'Bangers', cursive; font-size: 2.5rem; color: var(--lego-yellow); letter-spacing: 2px; }
+    .stat-label { font-size: 0.75rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.7); }
+
+    .scroll-hint {
+      margin-top: 60px;
+      animation: bounce 2s infinite, fadeUp 1s 1.2s both;
+      font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(10px); }
+    }
+
+    /* ─── SECTION TITLES ─── */
+    .section-header {
+      text-align: center;
+      padding: 80px 40px 40px;
+      position: relative;
+    }
+    .section-tag {
+      display: inline-block;
+      background: var(--lego-yellow);
+      color: var(--lego-dark);
+      font-family: 'Bangers', cursive;
+      font-size: 0.85rem;
+      letter-spacing: 3px;
+      padding: 4px 16px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      box-shadow: 0 3px 0 rgba(0,0,0,0.3);
+    }
+    .section-title {
+      font-family: 'Bangers', cursive;
+      font-size: clamp(2.5rem, 5vw, 4.5rem);
+      color: var(--lego-white);
+      letter-spacing: 4px;
+      text-shadow: 4px 4px 0 var(--lego-red);
+    }
+    .section-divider {
+      height: 8px;
+      margin: 0;
+    }
+
+    /* ─── GAMES GRID ─── */
+    #games {
+      padding: 20px 40px 80px;
+      background: linear-gradient(180deg, #111 0%, #0d0d0d 100%);
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 28px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .game-card {
+      background: #1e1e1e;
+      border-radius: var(--card-radius);
+      overflow: hidden;
+      border: 2px solid rgba(255,255,255,0.05);
+      cursor: pointer;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s, border-color 0.3s;
+      position: relative;
+      animation: cardReveal 0.6s both;
+    }
+    .game-card:hover {
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: 0 20px 60px rgba(255,215,0,0.2), 0 0 0 2px var(--lego-yellow);
+      border-color: var(--lego-yellow);
+    }
+    @keyframes cardReveal {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .game-card-image {
+      width: 100%; aspect-ratio: 16/9; object-fit: cover;
+      display: block;
+      background: #333;
+      transition: transform 0.4s;
+    }
+    .game-card:hover .game-card-image { transform: scale(1.05); }
+    .game-card-image-wrap { overflow: hidden; position: relative; }
+
+    .game-card-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.8));
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .game-card:hover .game-card-overlay { opacity: 1; }
+
+    .play-btn {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+      width: 56px; height: 56px; background: var(--lego-yellow);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .play-btn svg { fill: var(--lego-dark); margin-left: 4px; }
+    .game-card:hover .play-btn { transform: translate(-50%, -50%) scale(1); }
+
+    .game-card-placeholder {
+      width: 100%; aspect-ratio: 16/9;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Bangers', cursive; font-size: 0.9rem; letter-spacing: 2px;
+      color: rgba(255,255,255,0.3);
+      flex-direction: column; gap: 8px;
+    }
+
+    .game-card-info {
+      padding: 16px 20px 20px;
+    }
+    .game-card-series {
+      font-size: 0.7rem; font-weight: 900; letter-spacing: 3px;
+      text-transform: uppercase; color: var(--lego-yellow);
+      margin-bottom: 6px;
+    }
+    .game-card-title {
+      font-family: 'Bangers', cursive;
+      font-size: 1.3rem; letter-spacing: 2px;
+      color: var(--lego-white);
+      line-height: 1.2;
+    }
+    .game-card-meta {
+      display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap;
+    }
+    .game-tag {
+      font-size: 0.65rem; font-weight: 800; letter-spacing: 1px;
+      text-transform: uppercase; padding: 3px 10px; border-radius: 20px;
+    }
+    .tag-steam { background: rgba(0,109,183,0.25); color: #4db8ff; border: 1px solid rgba(0,109,183,0.4); }
+    .tag-action { background: rgba(218,41,28,0.2); color: #ff7070; border: 1px solid rgba(218,41,28,0.3); }
+    .tag-upcoming { background: rgba(255,107,0,0.2); color: #ffaa66; border: 1px solid rgba(255,107,0,0.3); }
+
+    /* ─── MODAL ─── */
+    #modal-overlay {
+      position: fixed; inset: 0; z-index: 2000;
+      background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(8px);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+      overflow-y: auto;
+    }
+    #modal-overlay.active { opacity: 1; pointer-events: all; }
+
+    #modal {
+      max-width: 1100px;
+      margin: 40px auto;
+      background: #1a1a1a;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 2px solid rgba(255,215,0,0.2);
+      box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+      transform: scale(0.9) translateY(40px);
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    #modal-overlay.active #modal { transform: scale(1) translateY(0); }
+
+    .modal-hero { position: relative; width: 100%; aspect-ratio: 21/9; background: #111; overflow: hidden; }
+    .modal-hero img { width: 100%; height: 100%; object-fit: cover; }
+    .modal-hero-gradient {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, transparent 40%, #1a1a1a 100%);
+    }
+
+    .modal-close {
+      position: absolute; top: 20px; right: 20px;
+      width: 44px; height: 44px;
+      background: rgba(0,0,0,0.7); border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 50%; cursor: pointer; color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; font-weight: 900;
+      transition: background 0.2s, transform 0.2s;
+      z-index: 10;
+    }
+    .modal-close:hover { background: var(--lego-red); transform: rotate(90deg); }
+
+    .modal-content { padding: 32px 40px 40px; }
+
+    .modal-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 20px; margin-bottom: 28px; }
+    .modal-title-block {}
+    .modal-series { font-size: 0.75rem; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: var(--lego-yellow); margin-bottom: 8px; }
+    .modal-title { font-family: 'Bangers', cursive; font-size: clamp(2rem, 4vw, 3.5rem); letter-spacing: 3px; text-shadow: 3px 3px 0 var(--lego-red); }
+
+    .steam-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--lego-blue);
+      color: white; text-decoration: none;
+      padding: 14px 28px; border-radius: 8px;
+      font-weight: 900; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase;
+      box-shadow: 0 4px 0 #004a80, 0 8px 20px rgba(0,0,0,0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+      white-space: nowrap;
+    }
+    .steam-btn:hover { transform: translateY(-3px); box-shadow: 0 7px 0 #004a80, 0 12px 30px rgba(0,0,0,0.4); }
+
+    .modal-description {
+      line-height: 1.8; color: rgba(255,255,255,0.8); font-size: 1.05rem;
+      margin-bottom: 32px;
+      padding: 24px; background: rgba(255,255,255,0.04);
+      border-left: 4px solid var(--lego-yellow); border-radius: 0 8px 8px 0;
+    }
+
+    .modal-section-title {
+      font-family: 'Bangers', cursive; font-size: 1.8rem;
+      letter-spacing: 3px; color: var(--lego-yellow);
+      margin: 32px 0 16px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .modal-section-title::after {
+      content: ''; flex: 1; height: 2px;
+      background: linear-gradient(to right, rgba(255,215,0,0.3), transparent);
+    }
+
+    .trailer-wrap {
+      position: relative; width: 100%; padding-top: 56.25%;
+      border-radius: 10px; overflow: hidden;
+      background: #000;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      margin-bottom: 8px;
+    }
+    .trailer-wrap iframe {
+      position: absolute; inset: 0; width: 100%; height: 100%; border: none;
+    }
+    .no-trailer {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+      color: rgba(255,255,255,0.3); font-family: 'Bangers', cursive; letter-spacing: 2px;
+    }
+
+    .screenshots-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;
+    }
+    .screenshot {
+      border-radius: 8px; overflow: hidden; cursor: pointer;
+      border: 2px solid transparent; transition: border-color 0.2s, transform 0.2s;
+      aspect-ratio: 16/9; background: #222;
+    }
+    .screenshot:hover { border-color: var(--lego-yellow); transform: scale(1.03); }
+    .screenshot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .achievements-list {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px;
+    }
+    .achievement-item {
+      display: flex; align-items: center; gap: 14px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 10px; padding: 14px 16px;
+      border: 1px solid rgba(255,255,255,0.06);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .achievement-item:hover { border-color: rgba(255,215,0,0.3); background: rgba(255,215,0,0.05); }
+    .achievement-icon {
+      width: 56px; height: 56px; flex-shrink: 0;
+      border-radius: 6px; overflow: hidden; background: #333;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem;
+    }
+    .achievement-icon img { width: 100%; height: 100%; object-fit: cover; }
+    .achievement-info { flex: 1; min-width: 0; }
+    .achievement-name { font-weight: 800; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .achievement-desc { font-size: 0.78rem; color: rgba(255,255,255,0.55); margin: 3px 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .achievement-bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.1); overflow: hidden; }
+    .achievement-bar-fill { height: 100%; background: linear-gradient(to right, var(--lego-yellow), var(--lego-orange)); border-radius: 3px; transition: width 1s ease; }
+    .achievement-pct { font-size: 0.75rem; font-weight: 900; color: var(--lego-yellow); margin-top: 4px; }
+
+    .loading-spinner {
+      display: flex; flex-direction: column; align-items: center; gap: 16px;
+      padding: 40px; color: rgba(255,255,255,0.4); font-family: 'Bangers', cursive; letter-spacing: 2px;
+    }
+    .spinner {
+      width: 44px; height: 44px; border: 4px solid rgba(255,215,0,0.2);
+      border-top-color: var(--lego-yellow); border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── SECTION DIVIDERS ─── */
+    .brick-divider {
+      height: 16px;
+      background-color: var(--lego-yellow);
+      background-image: radial-gradient(circle at 14px 8px, rgba(0,0,0,0.15) 8px, transparent 9px);
+      background-size: 28px 16px;
+    }
+    .brick-divider.red {
+      background-color: var(--lego-red);
+      background-image: radial-gradient(circle at 14px 8px, rgba(0,0,0,0.15) 8px, transparent 9px);
+    }
+    .brick-divider.blue {
+      background-color: var(--lego-blue);
+      background-image: radial-gradient(circle at 14px 8px, rgba(255,255,255,0.12) 8px, transparent 9px);
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: var(--lego-red);
+      padding: 40px;
+      text-align: center;
+      position: relative;
+    }
+    footer::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 8px;
+      background: repeating-linear-gradient(90deg, #9c1a12 0 20px, #8b170f 20px 40px);
+    }
+    .footer-logo {
+      font-family: 'Bangers', cursive;
+      font-size: 3rem; letter-spacing: 6px;
+      color: var(--lego-yellow);
+      text-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+      margin-bottom: 12px;
+    }
+    .footer-text { color: rgba(255,255,255,0.7); font-size: 0.85rem; margin-bottom: 20px; line-height: 1.7; }
+    .footer-text strong { color: white; }
+    .footer-github {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--lego-dark); color: var(--lego-yellow);
+      text-decoration: none; padding: 12px 28px; border-radius: 8px;
+      font-weight: 900; font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase;
+      border: 2px solid var(--lego-yellow);
+      box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .footer-github:hover { transform: translateY(-3px); box-shadow: 0 7px 0 rgba(0,0,0,0.4); }
+    .footer-github svg { fill: var(--lego-yellow); }
+    .footer-copy { margin-top: 24px; font-size: 0.72rem; color: rgba(255,255,255,0.4); }
+
+    /* ─── TOOLTIP ─── */
+    #tooltip {
+      position: fixed; z-index: 5000;
+      background: rgba(255,215,0,0.95); color: #1a1a1a;
+      padding: 6px 12px; border-radius: 6px;
+      font-size: 0.75rem; font-weight: 900; letter-spacing: 1px;
+      pointer-events: none; opacity: 0; transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+
+    /* ─── NOTIFICATION ─── */
+    #notif {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
+      background: #1e1e1e; border: 2px solid var(--lego-yellow);
+      color: white; padding: 14px 24px; border-radius: 10px;
+      font-weight: 800; font-size: 0.9rem; letter-spacing: 1px;
+      z-index: 9000; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex; align-items: center; gap: 10px;
+    }
+    #notif.show { transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 768px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      #games { padding: 20px 16px 60px; }
+      .games-grid { gap: 16px; }
+      .modal-content { padding: 20px 20px 32px; }
+      .modal-header { flex-direction: column; }
+      .hero-stats { gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <div class="nav-logo">LEGO® STEAM</div>
+  <div class="nav-links">
+    <a href="#hero">Accueil</a>
+    <a href="#games">Jeux</a>
+    <a href="https://github.com/Yokasashii" target="_blank">GitHub</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <!-- Grid bricks bg -->
+  <div class="hero-bricks" id="heroBricksGrid"></div>
+  <!-- Floating bricks -->
+  <div class="float-bricks" id="floatBricks"></div>
+
+  <div class="hero-content">
+    <div class="hero-badge">🧱 STEAM GAME COLLECTION</div>
+    <div class="hero-title">LEGO®</div>
+    <div class="hero-subtitle">Games Universe</div>
+
+    <div class="hero-description">
+      <strong>LEGO®</strong>, contraction de "<em>leg godt</em>" — joue bien en danois —
+      est né en <strong>1932</strong> dans l'atelier d'Ole Kirk Christiansen,
+      un menuisier de la ville de Billund, au Danemark. Ce qui a commencé par
+      des jouets en bois simples s'est transformé en 1949 avec la brique plastique
+      à connexions, révolutionnant le jeu de construction. Depuis, LEGO® est devenu
+      un phénomène mondial de créativité, d'imagination et d'aventure —
+      et son univers vidéoludique ne fait pas exception. Avec des dizaines de jeux
+      mêlant humour, action et nostalgie, les jeux <strong>LEGO® sur Steam</strong>
+      ont conquis des millions de joueurs à travers le monde.
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat-brick">
+        <div class="stat-number" id="totalGames">29</div>
+        <div class="stat-label">Jeux LEGO</div>
+      </div>
+      <div class="stat-brick" style="background:var(--lego-blue);box-shadow:0 6px 0 #004a80,0 10px 20px rgba(0,0,0,.3)">
+        <div class="stat-number">1932</div>
+        <div class="stat-label">Fondation</div>
+      </div>
+      <div class="stat-brick" style="background:var(--lego-green);box-shadow:0 6px 0 #006b35,0 10px 20px rgba(0,0,0,.3)">
+        <div class="stat-number">∞</div>
+        <div class="stat-label">Créativité</div>
+      </div>
+    </div>
+
+    <div class="scroll-hint">▼ &nbsp; Découvrir les jeux &nbsp; ▼</div>
+  </div>
+</section>
+
+<div class="brick-divider"></div>
+<div class="brick-divider red"></div>
+<div class="brick-divider blue"></div>
+
+<!-- GAMES SECTION -->
+<section id="games">
+  <div class="section-header">
+    <div class="section-tag">🎮 CATALOGUE COMPLET</div>
+    <h2 class="section-title">TOUS LES JEUX LEGO® STEAM</h2>
+  </div>
+  <div class="games-grid" id="gamesGrid">
+    <!-- Cards injected by JS -->
+  </div>
+</section>
+
+<div class="brick-divider blue"></div>
+<div class="brick-divider red"></div>
+<div class="brick-divider"></div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">LEGO®</div>
+  <p class="footer-text">
+    Ce site est un projet <strong>fan-made</strong> non officiel.<br>
+    LEGO® est une marque déposée du Groupe LEGO. Steam® est une marque d'<strong>Valve Corporation</strong>.<br>
+    Données récupérées via l'<strong>API officielle Steam</strong>.
+  </p>
+  <a href="https://github.com/Yokasashii" target="_blank" class="footer-github">
+    <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12"/></svg>
+    Fait par Yokasashi
+  </a>
+  <p class="footer-copy">© 2025 — Fan project — Toutes les marques appartiennent à leurs propriétaires respectifs.</p>
+</footer>
+
+<!-- MODAL -->
+<div id="modal-overlay">
+  <div id="modal">
+    <div class="modal-hero" id="modalHero">
+      <div class="modal-hero-gradient"></div>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title-block">
+          <div class="modal-series" id="modalSeries"></div>
+          <h2 class="modal-title" id="modalTitle"></h2>
+        </div>
+        <a href="#" class="steam-btn" id="modalSteamLink" target="_blank">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.6 0 12 0zm5.7 8.8c-.4 0-.8-.2-1.1-.4L12 5.7 7.4 8.4c-.3.2-.7.4-1.1.4-1.3 0-2.3-1-2.3-2.3s1-2.3 2.3-2.3c.4 0 .8.1 1.2.3l3.5 2v-2c0-1.3 1-2.3 2.3-2.3h.2c1.3 0 2.3 1 2.3 2.3s-1.1 2.3-2.1 2.3z"/></svg>
+          Voir sur Steam
+        </a>
+      </div>
+      <div class="modal-description" id="modalDesc"></div>
+
+      <div id="modalTrailerSection">
+        <div class="modal-section-title">🎬 Trailer</div>
+        <div class="trailer-wrap" id="modalTrailer"></div>
+      </div>
+
+      <div id="modalScreensSection">
+        <div class="modal-section-title">📸 Screenshots</div>
+        <div class="screenshots-grid" id="modalScreenshots"></div>
+      </div>
+
+      <div id="modalAchievSection">
+        <div class="modal-section-title">🏆 Succès Steam</div>
+        <div id="modalAchievements"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLTIP -->
+<div id="tooltip"></div>
+<!-- NOTIFICATION -->
+<div id="notif">
+  <span id="notifMsg"></span>
+</div>
+
+<script>
+// ─── GAME DATABASE ───────────────────────────────────────────
+const STEAM_API_KEY = 'A5B21889E7F05C280C98E145335D99BD';
+const CORS_PROXY = 'https://corsproxy.io/?';
+
+const GAMES = [
+  { id: 32440,   title: "LEGO® Star Wars™",          subtitle: "The Complete Saga",         series: "Star Wars",      tag: "action",   appid: 32440  },
+  { id: 32450,   title: "LEGO® Star Wars™ III",       subtitle: "The Clone Wars",            series: "Star Wars",      tag: "action",   appid: 32450  },
+  { id: 432200,  title: "LEGO® Star Wars™",           subtitle: "The Force Awakens",         series: "Star Wars",      tag: "action",   appid: 432200 },
+  { id: 920210,  title: "LEGO® Star Wars™",           subtitle: "The Skywalker Saga",        series: "Star Wars",      tag: "action",   appid: 920210 },
+  { id: 32400,   title: "LEGO® Indiana Jones™",       subtitle: "The Original Adventures",   series: "Indiana Jones",  tag: "aventure", appid: 32400  },
+  { id: 32460,   title: "LEGO® Indiana Jones™ 2",     subtitle: "The Adventure Continues",   series: "Indiana Jones",  tag: "aventure", appid: 32460  },
+  { id: 428740,  title: "LEGO® Harry Potter™",        subtitle: "Years 1-4",                 series: "Harry Potter",   tag: "magie",    appid: 428740 },
+  { id: 428750,  title: "LEGO® Harry Potter™",        subtitle: "Years 5-7",                 series: "Harry Potter",   tag: "magie",    appid: 428750 },
+  { id: 203160,  title: "LEGO® The Lord of the Rings™", subtitle: "",                        series: "Middle-Earth",   tag: "aventure", appid: 203160 },
+  { id: 261570,  title: "LEGO® The Hobbit™",          subtitle: "",                          series: "Middle-Earth",   tag: "aventure", appid: 261570 },
+  { id: 249130,  title: "LEGO® Marvel™ Super Heroes", subtitle: "",                          series: "Marvel",         tag: "action",   appid: 249130 },
+  { id: 647830,  title: "LEGO® Marvel™ Super Heroes 2", subtitle: "",                        series: "Marvel",         tag: "action",   appid: 647830 },
+  { id: 438100,  title: "LEGO® Marvel's Avengers",    subtitle: "",                          series: "Marvel",         tag: "action",   appid: 438100 },
+  { id: 608790,  title: "LEGO® DC Super-Villains",    subtitle: "",                          series: "DC",             tag: "action",   appid: 608790 },
+  { id: 21000,   title: "LEGO® Batman™",              subtitle: "The Videogame",             series: "Batman",         tag: "action",   appid: 21000  },
+  { id: 204060,  title: "LEGO® Batman™ 2",            subtitle: "DC Super Heroes",           series: "Batman",         tag: "action",   appid: 204060 },
+  { id: 313690,  title: "LEGO® Batman™ 3",            subtitle: "Beyond Gotham",             series: "Batman",         tag: "action",   appid: 313690 },
+  { id: 352400,  title: "LEGO® Jurassic World",       subtitle: "",                          series: "Jurassic",       tag: "aventure", appid: 352400 },
+  { id: 353090,  title: "LEGO® City Undercover",      subtitle: "",                          series: "City",           tag: "sandbox",  appid: 353090 },
+  { id: 267530,  title: "The LEGO® Movie",            subtitle: "Videogame",                 series: "LEGO Movie",     tag: "aventure", appid: 267530 },
+  { id: 787480,  title: "The LEGO® Movie 2",          subtitle: "Videogame",                 series: "LEGO Movie",     tag: "aventure", appid: 787480 },
+  { id: 332310,  title: "LEGO® Worlds",               subtitle: "",                          series: "Worlds",         tag: "sandbox",  appid: 332310 },
+  { id: 1386430, title: "LEGO® Brawls",               subtitle: "",                          series: "Brawls",         tag: "combat",   appid: 1386430 },
+  { id: 1429400, title: "LEGO® Builder's Journey",    subtitle: "",                          series: "Builder",        tag: "puzzle",   appid: 1429400 },
+  { id: 1898790, title: "LEGO® Bricktales",           subtitle: "",                          series: "Bricktales",     tag: "puzzle",   appid: 1898790 },
+  { id: 2677660, title: "LEGO® Horizon Adventures",   subtitle: "",                          series: "Horizon",        tag: "action",   appid: 2677660 },
+  { id: 0,       title: "LEGO® Voyagers",             subtitle: "",                          series: "Upcoming",       tag: "upcoming", appid: 0       },
+  { id: 0,       title: "LEGO® Party!",               subtitle: "",                          series: "Upcoming",       tag: "upcoming", appid: 0       },
+  { id: 0,       title: "LEGO® Batman:",              subtitle: "Legacy of the Dark Knight", series: "Batman",         tag: "upcoming", appid: 0       },
+];
+
+const SERIES_COLORS = {
+  'Star Wars': '#ffe81f',
+  'Indiana Jones': '#c8873e',
+  'Harry Potter': '#740001',
+  'Middle-Earth': '#4a7c59',
+  'Marvel': '#e62429',
+  'DC': '#0476F2',
+  'Batman': '#1a1a2e',
+  'Jurassic': '#4a7c59',
+  'City': '#0066cc',
+  'LEGO Movie': '#ff8800',
+  'Worlds': '#00c853',
+  'Brawls': '#f44336',
+  'Builder': '#ff9800',
+  'Bricktales': '#9c27b0',
+  'Horizon': '#2196f3',
+  'Upcoming': '#607d8b',
+};
+
+// ─── HERO BRICKS GRID ────────────────────────────────────────
+function buildHeroBricksGrid() {
+  const grid = document.getElementById('heroBricksGrid');
+  const count = Math.ceil(window.innerWidth / 80) * Math.ceil(window.innerHeight / 80);
+  for (let i = 0; i < Math.min(count, 200); i++) {
+    const b = document.createElement('div');
+    b.className = 'hero-brick';
+    b.style.cssText = `--i:${i};height:${40 + Math.random()*40}px;animation-duration:${2+Math.random()*3}s;animation-delay:${Math.random()*2}s`;
+    grid.appendChild(b);
+  }
+}
+
+// ─── FLOATING BRICKS ─────────────────────────────────────────
+function buildFloatingBricks() {
+  const container = document.getElementById('floatBricks');
+  const colors = ['#FFD700','#DA291C','#006DB7','#00A650','#FF6B00','#9b59b6'];
+  for (let i = 0; i < 18; i++) {
+    const b = document.createElement('div');
+    b.className = 'fbrick';
+    const c = colors[Math.floor(Math.random() * colors.length)];
+    b.style.cssText = `
+      background:${c};
+      left:${Math.random()*100}%;
+      width:${30+Math.random()*30}px;
+      height:${18+Math.random()*14}px;
+      animation-duration:${8+Math.random()*12}s;
+      animation-delay:${Math.random()*10}s;
+    `;
+    container.appendChild(b);
+  }
+}
+
+// ─── GAME CARDS ───────────────────────────────────────────────
+function buildGamesGrid() {
+  const grid = document.getElementById('gamesGrid');
+  grid.innerHTML = '';
+  GAMES.forEach((game, idx) => {
+    const card = document.createElement('div');
+    card.className = 'game-card';
+    card.style.animationDelay = `${idx * 0.05}s`;
+    card.onclick = () => openModal(game);
+
+    const imageUrl = game.appid
+      ? `https://cdn.akamai.steamstatic.com/steam/apps/${game.appid}/header.jpg`
+      : null;
+
+    const tagClass = game.tag === 'upcoming' ? 'tag-upcoming' : 'tag-action';
+    const tagLabel = game.tag === 'upcoming' ? '🔜 À venir' : '🎮 Disponible';
+
+    card.innerHTML = `
+      <div class="game-card-image-wrap">
+        ${imageUrl
+          ? `<img class="game-card-image" src="${imageUrl}" alt="${game.title}" loading="lazy" onerror="this.parentNode.innerHTML=getPlaceholder('${game.series}')">`
+          : getPlaceholderHTML(game.series)
+        }
+        <div class="game-card-overlay"></div>
+        <div class="play-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+      </div>
+      <div class="game-card-info">
+        <div class="game-card-series" style="color:${SERIES_COLORS[game.series] || '#FFD700'}">${game.series}</div>
+        <div class="game-card-title">${game.title}${game.subtitle ? '<br><small style="font-size:0.85em;opacity:0.7">'+game.subtitle+'</small>' : ''}</div>
+        <div class="game-card-meta">
+          <span class="game-tag ${tagClass}">${tagLabel}</span>
+          ${game.tag !== 'upcoming' ? `<span class="game-tag tag-steam">Steam</span>` : ''}
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function getPlaceholderHTML(series) {
+  const color = SERIES_COLORS[series] || '#333';
+  return `<div class="game-card-placeholder" style="background:${color}22;border-bottom:3px solid ${color}44">
+    <span style="font-size:2rem">🧱</span>
+    <span>${series}</span>
+  </div>`;
+}
+
+// ─── MODAL ────────────────────────────────────────────────────
+const modalOverlay = document.getElementById('modal-overlay');
+const modalClose = document.getElementById('modalClose');
+
+modalClose.onclick = closeModal;
+modalOverlay.onclick = (e) => { if (e.target === modalOverlay) closeModal(); };
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+function closeModal() {
+  modalOverlay.classList.remove('active');
+  document.body.style.overflow = '';
+  // stop any iframes
+  document.getElementById('modalTrailer').innerHTML = '';
+}
+
+async function openModal(game) {
+  document.body.style.overflow = 'hidden';
+  modalOverlay.classList.add('active');
+  modalOverlay.scrollTop = 0;
+
+  // Reset
+  document.getElementById('modalSeries').textContent = game.series;
+  document.getElementById('modalTitle').textContent = game.title + (game.subtitle ? ': ' + game.subtitle : '');
+  document.getElementById('modalDesc').innerHTML = `<div class="loading-spinner"><div class="spinner"></div>Chargement des données Steam...</div>`;
+  document.getElementById('modalTrailer').innerHTML = `<div class="no-trailer">Chargement...</div>`;
+  document.getElementById('modalScreenshots').innerHTML = '';
+  document.getElementById('modalAchievements').innerHTML = `<div class="loading-spinner"><div class="spinner"></div>Chargement des succès...</div>`;
+
+  const heroImg = document.getElementById('modalHero');
+  // Remove old img
+  const oldImg = heroImg.querySelector('img');
+  if (oldImg) oldImg.remove();
+
+  if (game.appid) {
+    const steamLink = `https://store.steampowered.com/app/${game.appid}`;
+    document.getElementById('modalSteamLink').href = steamLink;
+    document.getElementById('modalSteamLink').style.display = 'inline-flex';
+
+    // Hero image
+    const img = document.createElement('img');
+    img.src = `https://cdn.akamai.steamstatic.com/steam/apps/${game.appid}/library_hero.jpg`;
+    img.onerror = () => { img.src = `https://cdn.akamai.steamstatic.com/steam/apps/${game.appid}/header.jpg`; };
+    img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
+    heroImg.insertBefore(img, heroImg.firstChild);
+
+    // Fetch game details from Steam API via Golang backend (or direct)
+    await Promise.all([
+      loadGameDetails(game),
+      loadAchievements(game),
+    ]);
+  } else {
+    document.getElementById('modalSteamLink').style.display = 'none';
+    document.getElementById('modalDesc').innerHTML = `
+      <p>Ce jeu n'est pas encore disponible sur Steam. Restez à l'affût des annonces officielles !</p>
+      <p style="margin-top:12px;color:rgba(255,165,0,0.8)">🔜 Sortie prévue prochainement.</p>
+    `;
+    document.getElementById('modalTrailer').innerHTML = `<div class="no-trailer"><span style="font-size:3rem">⏳</span>Trailer bientôt disponible</div>`;
+    document.getElementById('modalAchievements').innerHTML = `<p style="color:rgba(255,255,255,0.4);padding:20px">Succès non disponibles pour les jeux à venir.</p>`;
+  }
+}
+
+async function loadGameDetails(game) {
+  try {
+    // Use Steam store API (no CORS restriction for app details)
+    const url = `https://store.steampowered.com/api/appdetails?appids=${game.appid}&l=french`;
+    // Because of CORS we'll use a proxy
+    const res = await fetch(`${CORS_PROXY}${encodeURIComponent(url)}`);
+    const json = await res.json();
+    const data = json[game.appid];
+
+    if (data && data.success && data.data) {
+      const d = data.data;
+
+      // Description
+      const desc = d.short_description || d.detailed_description || 'Description non disponible.';
+      document.getElementById('modalDesc').innerHTML = desc;
+
+      // Trailer
+      const trailerEl = document.getElementById('modalTrailer');
+      if (d.movies && d.movies.length > 0) {
+        const movie = d.movies[0];
+        const mp4 = movie.webm?.max || movie.mp4?.max || '';
+        if (mp4) {
+          trailerEl.innerHTML = `<video controls autoplay muted loop style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" src="${mp4}"></video>`;
+        } else {
+          trailerEl.innerHTML = `<div class="no-trailer"><span style="font-size:3rem">🎬</span>Trailer non disponible</div>`;
+        }
+      } else {
+        // Try YouTube as fallback (search based on title)
+        const ytQuery = encodeURIComponent(game.title + ' ' + (game.subtitle || '') + ' official trailer');
+        trailerEl.innerHTML = `
+          <div class="no-trailer" style="flex-direction:column;gap:12px">
+            <span style="font-size:3rem">🎬</span>
+            <span>Trailer non disponible via Steam</span>
+            <a href="https://www.youtube.com/results?search_query=${ytQuery}" target="_blank"
+               style="color:var(--lego-yellow);font-size:0.85rem;text-decoration:underline">
+              Rechercher sur YouTube ↗
+            </a>
+          </div>`;
+      }
+
+      // Screenshots
+      const screensEl = document.getElementById('modalScreenshots');
+      if (d.screenshots && d.screenshots.length > 0) {
+        screensEl.innerHTML = d.screenshots.slice(0, 12).map(s =>
+          `<div class="screenshot" onclick="openScreenshot('${s.path_full}')">
+            <img src="${s.path_thumbnail}" alt="screenshot" loading="lazy">
+          </div>`
+        ).join('');
+      } else {
+        screensEl.innerHTML = `<p style="color:rgba(255,255,255,0.4);padding:16px">Aucun screenshot disponible.</p>`;
+      }
+
+    } else {
+      throw new Error('No data');
+    }
+  } catch (e) {
+    console.error('Steam API error:', e);
+    document.getElementById('modalDesc').innerHTML = `
+      <p>Les données Steam n'ont pas pu être récupérées.</p>
+      <p style="margin-top:8px;font-size:0.85rem;color:rgba(255,255,255,0.4)">
+        L'API Steam nécessite un backend Golang pour contourner les restrictions CORS.
+        <a href="https://store.steampowered.com/app/${game.appid}" target="_blank" style="color:var(--lego-yellow)">
+          Voir directement sur Steam ↗
+        </a>
+      </p>
+    `;
+    document.getElementById('modalTrailer').innerHTML = `<div class="no-trailer"><span style="font-size:3rem">⚠️</span>Données non disponibles</div>`;
+    document.getElementById('modalScreenshots').innerHTML = '';
+  }
+}
+
+async function loadAchievements(game) {
+  const el = document.getElementById('modalAchievements');
+  try {
+    // Steam achievements via ISteamUserStats
+    const url = `https://api.steampowered.com/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v0002/?gameid=${game.appid}&format=json`;
+    const schemaUrl = `https://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/?key=${STEAM_API_KEY}&appid=${game.appid}&l=french&format=json`;
+
+    const [percRes, schemaRes] = await Promise.all([
+      fetch(`${CORS_PROXY}${encodeURIComponent(url)}`).catch(() => null),
+      fetch(`${CORS_PROXY}${encodeURIComponent(schemaUrl)}`).catch(() => null),
+    ]);
+
+    let percentages = {};
+    if (percRes && percRes.ok) {
+      const percData = await percRes.json();
+      const list = percData?.achievementpercentages?.achievements || [];
+      list.forEach(a => { percentages[a.name] = a.percent; });
+    }
+
+    let achievements = [];
+    if (schemaRes && schemaRes.ok) {
+      const schemaData = await schemaRes.json();
+      achievements = schemaData?.game?.availableGameStats?.achievements || [];
+    }
+
+    if (achievements.length === 0) {
+      el.innerHTML = `<p style="color:rgba(255,255,255,0.4);padding:20px 0">Aucun succès disponible ou données non accessibles sans backend.</p>`;
+      return;
+    }
+
+    // Sort by percentage desc, show top 12
+    const enriched = achievements.map(a => ({
+      ...a,
+      pct: percentages[a.name] || 0,
+    })).sort((a, b) => b.pct - a.pct).slice(0, 18);
+
+    el.innerHTML = `<div class="achievements-list">` +
+      enriched.map(a => `
+        <div class="achievement-item">
+          <div class="achievement-icon">
+            ${a.icon ? `<img src="${a.icon}" alt="${a.displayName}" onerror="this.parentNode.innerHTML='🏆'">` : '🏆'}
+          </div>
+          <div class="achievement-info">
+            <div class="achievement-name">${a.displayName || a.name}</div>
+            <div class="achievement-desc">${a.description || ''}</div>
+            <div class="achievement-bar">
+              <div class="achievement-bar-fill" style="width:${a.pct.toFixed(1)}%"></div>
+            </div>
+            <div class="achievement-pct">${a.pct.toFixed(1)}% des joueurs</div>
+          </div>
+        </div>
+      `).join('') +
+    `</div>`;
+
+    // Animate bars
+    setTimeout(() => {
+      document.querySelectorAll('.achievement-bar-fill').forEach(bar => {
+        const w = bar.style.width;
+        bar.style.width = '0';
+        requestAnimationFrame(() => { bar.style.width = w; });
+      });
+    }, 100);
+
+  } catch (e) {
+    console.error('Achievements error:', e);
+    el.innerHTML = `<p style="color:rgba(255,255,255,0.4);padding:20px 0">Impossible de charger les succès. Un backend Golang est nécessaire pour contourner les restrictions CORS de l'API Steam.</p>`;
+  }
+}
+
+// ─── SCREENSHOT LIGHTBOX ─────────────────────────────────────
+function openScreenshot(url) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;cursor:zoom-out;`;
+  const img = document.createElement('img');
+  img.src = url;
+  img.style.cssText = `max-width:90vw;max-height:90vh;border-radius:8px;box-shadow:0 20px 80px rgba(0,0,0,0.8);`;
+  overlay.appendChild(img);
+  overlay.onclick = () => document.body.removeChild(overlay);
+  document.body.appendChild(overlay);
+}
+
+// ─── NOTIFICATIONS ───────────────────────────────────────────
+function showNotif(msg) {
+  const n = document.getElementById('notif');
+  document.getElementById('notifMsg').textContent = msg;
+  n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), 3000);
+}
+
+// ─── SCROLL ANIMATIONS ───────────────────────────────────────
+function initScrollAnimations() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.game-card').forEach((card, i) => {
+    card.style.opacity = '0';
+    card.style.transition = `opacity 0.5s ${i*0.04}s, transform 0.5s ${i*0.04}s`;
+    observer.observe(card);
+  });
+}
+
+// ─── CURSOR BRICK TRAIL ──────────────────────────────────────
+let lastTrail = 0;
+document.addEventListener('mousemove', (e) => {
+  if (Date.now() - lastTrail < 60) return;
+  lastTrail = Date.now();
+  const trail = document.createElement('div');
+  trail.style.cssText = `
+    position:fixed;
+    left:${e.clientX - 8}px;
+    top:${e.clientY - 5}px;
+    width:16px;height:10px;
+    border-radius:2px;
+    background:${['#FFD700','#DA291C','#006DB7','#00A650'][Math.floor(Math.random()*4)]};
+    pointer-events:none;
+    z-index:9998;
+    opacity:0.8;
+    animation:trailFade 0.5s forwards;
+  `;
+  document.body.appendChild(trail);
+  setTimeout(() => trail.remove(), 500);
+});
+
+const trailStyle = document.createElement('style');
+trailStyle.textContent = `@keyframes trailFade { to { opacity:0; transform:translateY(-20px) rotate(180deg) scale(0); } }`;
+document.head.appendChild(trailStyle);
+
+// ─── INIT ────────────────────────────────────────────────────
+buildHeroBricksGrid();
+buildFloatingBricks();
+buildGamesGrid();
+setTimeout(initScrollAnimations, 100);
+</script>
+</body>
+</html>
