@@ -1,0 +1,29 @@
+# Variables d'environnement
+.env
+
+# Binaires Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Fichiers de test
+*.test
+
+# Output du build
+*.out
+
+# Dépendances
+vendor/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

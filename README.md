@@ -47,14 +47,33 @@ LegoGames-Wiki/
 
 ### Étapes de démarrage
 
-1. **Ouvrir un terminal** dans le dossier du projet
+1. **Cloner ou télécharger le projet**
 
-2. **Démarrer le serveur Golang** :
+2. **Configurer les variables d'environnement**
+   
+   Créez un fichier `.env` à la racine du projet (ou copiez `.env.example`) :
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Modifiez le fichier `.env` avec vos informations :
+   ```env
+   PORT=8080
+   STEAM_API_KEY=votre_clé_api_steam
+   DATABASE_URL=postgresql://username:password@host:5432/database
+   ```
+
+3. **Installer les dépendances Go**
+   ```powershell
+   go mod download
+   ```
+
+4. **Démarrer le serveur Golang** :
    ```powershell
    go run main.go
    ```
 
-3. **Ouvrir votre navigateur** et accéder à :
+5. **Ouvrir votre navigateur** et accéder à :
    ```
    http://localhost:8080
    ```
@@ -62,12 +81,17 @@ LegoGames-Wiki/
 Le serveur Golang :
 - Sert les fichiers statiques (HTML, CSS, JS)
 - Agit comme proxy pour l'API Steam (évite les problèmes CORS)
-- Utilise la clé API Steam fournie
+- Utilise les variables d'environnement depuis le fichier `.env`
+- Connexion optionnelle à PostgreSQL pour stocker les données
 
 ## 🎮 API Steam
+une clé configurée dans `.env`.
 
-Le backend Golang utilise l'API Steam avec votre clé :
-```
+### Configuration
+
+Ajoutez votre clé API Steam dans le fichier `.env` :
+```env
+STEAM_API_KEY=votre_clé_api_steam_ici
 Key: A5B21889E7F05C280C98E145335D99BD
 ```
 
@@ -104,11 +128,18 @@ Fait par **Yokasashi**
 - Ce projet est **fan-made** et non officiel
 - LEGO® est une marque déposée du Groupe LEGO
 - Steam® est une marque de Valve Corporation
-- Les données sont récupérées via l'API officielle Steam
+- Les doerveur ne démarre pas
 
-## 🐛 Dépannage
+1. Vérifiez que le fichier `.env` existe avec toutes les variables requises
+2. Assurez-vous que Go est correctement installé (`go version`)
+3. Installez les dépendances : `go mod download`
 
-### Le site ne charge pas les données Steam
+### Les données Steam ne se chargent pas
+
+1. Vérifiez que le serveur Go est démarré (`go run main.go`)
+2. Vérifiez que votre clé API Steam est valide dans `.env`
+3. Vérifiez que le port 8080 est disponible
+4## Le site ne charge pas les données Steam
 
 1. Vérifiez que le serveur Go est démarré (`go run main.go`)
 2. Vérifiez que le port 8080 est disponible

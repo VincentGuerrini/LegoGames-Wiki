@@ -1,5 +1,6 @@
 // ─── CONFIGURATION ────────────────────────────────────────────
-const API_BASE_URL = 'http://localhost:8080'; // Backend Golang
+// Détection automatique de l'URL de l'API (même origine que le site)
+const API_BASE_URL = window.location.origin;
 
 const GAMES = [
   { id: 32440,   title: "LEGO® Star Wars™",          subtitle: "The Complete Saga",         series: "Star Wars",      tag: "action",   appid: 32440  },

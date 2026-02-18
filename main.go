@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,11 +10,15 @@ import (
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/joho/godotenv"
 )
 
-const (
-	STEAM_API_KEY = "A5B21889E7F05C280C98E145335D99BD"
-	PORT          = "8080"
+var (
+	STEAM_API_KEY string
+	PORT          string
+	dbConn        *pgx.Conn
 )
 
 type GameDetailsResponse struct {
@@ -35,6 +40,31 @@ type AchievementWithPct struct {
 }
 
 func main() {
+	// Charger les variables d'environnement depuis .env
+	if err := godotenv.Load(); err != nil {
+		log.Println("⚠️  Fichier .env non trouvé, utilisation des variables d'environnement système")
+	}
+
+	// Récupérer les variables d'environnement
+	STEAM_API_KEY = os.Getenv("STEAM_API_KEY")
+	PORT = os.Getenv("PORT")
+	if PORT == "" {
+		PORT = "8080" // Valeur par défaut
+	}
+
+	if STEAM_API_KEY == "" {
+		log.Fatal("❌ STEAM_API_KEY non définie dans le fichier .env")
+	}
+
+	// Initialize database connection
+	if err := initDB(); err != nil {
+		log.Printf("⚠️  Base de données non disponible: %v", err)
+		log.Printf("ℹ️  Le serveur continuera sans base de données")
+	} else {
+		defer dbConn.Close(context.Background())
+		log.Printf("✅ Base de données connectée avec succès")
+	}
+
 	// Enable CORS for all routes
 	http.HandleFunc("/", enableCORS(serveStaticFiles))
 	http.HandleFunc("/api/game/", enableCORS(handleGameDetails))
@@ -43,9 +73,35 @@ func main() {
 	log.Printf("🧱 LEGO Games Wiki - Backend Golang")
 	log.Printf("🚀 Serveur démarré sur http://localhost:%s", PORT)
 	log.Printf("📡 Serveur de fichiers statiques activé")
-	log.Printf("🔑 Utilisation de la clé API Steam: %s", STEAM_API_KEY)
+	log.Printf("🔑 Clé API Steam chargée depuis .env")
 
 	if err := http.ListenAndServe(":"+PORT, nil); err != nil {
+		log.Fatal("Erreur lors du démarrage du serveur:", err)
+	}
+}
+
+// initDB initialise la connexion à la base de données PostgreSQL
+func initDB() error {
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		return fmt.Errorf("DATABASE_URL non définie")
+	}
+
+	conn, err := pgx.Connect(context.Background(), databaseURL)
+	if err != nil {
+		return fmt.Errorf("échec de connexion à la base de données: %w", err)
+	}
+
+	// Test de la connexion
+	var version string
+	if err := conn.QueryRow(context.Background(), "SELECT version()").Scan(&version); err != nil {
+		conn.Close(context.Background())
+		return fmt.Errorf("échec de la requête de test: %w", err)
+	}
+
+	log.Printf("🗄️  PostgreSQL connecté: %s", version)
+	dbConn = conn
+	return nilf err := http.ListenAndServe(":"+PORT, nil); err != nil {
 		log.Fatal("Erreur lors du démarrage du serveur:", err)
 	}
 }
