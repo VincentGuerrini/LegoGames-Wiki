@@ -381,7 +381,7 @@
       subtitle: "",
       series: "Bricktales",
       tag: "puzzle",
-      appid: 1538550,
+      appid: 0,
     },
     {
       id: 1969370,
@@ -389,7 +389,7 @@
       subtitle: "",
       series: "Brawls",
       tag: "puzzle",
-      appid: 1969370,
+      appid: 0,
     },
     {
       id: 2215200,
@@ -397,7 +397,7 @@
       subtitle: "Legacy of the Dark Knight",
       series: "Batman",
       tag: "upcoming",
-      appid: 2215200,
+      appid: 0,
     },
   ];
 
