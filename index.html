@@ -1,146 +1,208 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LEGO® Games — Steam Collection</title>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Bangers&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>LEGO® Games — Steam Collection</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Bangers&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <!-- NAVBAR -->
+        <nav>
+            <div class="nav-logo">LEGO® STEAM</div>
+            <div class="nav-links">
+                <a href="#hero">Accueil</a>
+                <a href="#games">Jeux</a>
+                <a href="https://github.com/Yokasashii" target="_blank"
+                    >GitHub</a
+                >
+            </div>
+        </nav>
 
-<!-- NAVBAR -->
-<nav>
-  <div class="nav-logo">LEGO® STEAM</div>
-  <div class="nav-links">
-    <a href="#hero">Accueil</a>
-    <a href="#games">Jeux</a>
-    <a href="https://github.com/Yokasashii" target="_blank">GitHub</a>
-  </div>
-</nav>
+        <!-- HERO -->
+        <section id="hero">
+            <!-- Grid bricks bg -->
+            <div class="hero-bricks" id="heroBricksGrid"></div>
+            <!-- Floating bricks -->
+            <div class="float-bricks" id="floatBricks"></div>
 
-<!-- HERO -->
-<section id="hero">
-  <!-- Grid bricks bg -->
-  <div class="hero-bricks" id="heroBricksGrid"></div>
-  <!-- Floating bricks -->
-  <div class="float-bricks" id="floatBricks"></div>
+            <div class="hero-content">
+                <div class="hero-badge">🧱 STEAM GAME COLLECTION</div>
+                <div class="hero-title">LEGO®</div>
+                <div class="hero-subtitle">Games Universe</div>
 
-  <div class="hero-content">
-    <div class="hero-badge">🧱 STEAM GAME COLLECTION</div>
-    <div class="hero-title">LEGO®</div>
-    <div class="hero-subtitle">Games Universe</div>
+                <div class="hero-description">
+                    <strong>LEGO®</strong>, contraction de "<em>leg godt</em>" —
+                    joue bien en danois — est né en <strong>1932</strong> dans
+                    l'atelier d'Ole Kirk Christiansen, un menuisier de la ville
+                    de Billund, au Danemark. Ce qui a commencé par des jouets en
+                    bois simples s'est transformé en 1949 avec la brique
+                    plastique à connexions, révolutionnant le jeu de
+                    construction. Depuis, LEGO® est devenu un phénomène mondial
+                    de créativité, d'imagination et d'aventure — et son univers
+                    vidéoludique ne fait pas exception. Avec des dizaines de
+                    jeux mêlant humour, action et nostalgie, les jeux
+                    <strong>LEGO® sur Steam</strong>
+                    ont conquis des millions de joueurs à travers le monde.
+                </div>
 
-    <div class="hero-description">
-      <strong>LEGO®</strong>, contraction de "<em>leg godt</em>" — joue bien en danois —
-      est né en <strong>1932</strong> dans l'atelier d'Ole Kirk Christiansen,
-      un menuisier de la ville de Billund, au Danemark. Ce qui a commencé par
-      des jouets en bois simples s'est transformé en 1949 avec la brique plastique
-      à connexions, révolutionnant le jeu de construction. Depuis, LEGO® est devenu
-      un phénomène mondial de créativité, d'imagination et d'aventure —
-      et son univers vidéoludique ne fait pas exception. Avec des dizaines de jeux
-      mêlant humour, action et nostalgie, les jeux <strong>LEGO® sur Steam</strong>
-      ont conquis des millions de joueurs à travers le monde.
-    </div>
+                <div class="hero-stats">
+                    <div class="stat-brick">
+                        <div class="stat-number" id="totalGames">29</div>
+                        <div class="stat-label">Jeux LEGO</div>
+                    </div>
+                    <div
+                        class="stat-brick"
+                        style="
+                            background: var(--lego-blue);
+                            box-shadow:
+                                0 6px 0 #004a80,
+                                0 10px 20px rgba(0, 0, 0, 0.3);
+                        "
+                    >
+                        <div class="stat-number">1932</div>
+                        <div class="stat-label">Fondation</div>
+                    </div>
+                    <div
+                        class="stat-brick"
+                        style="
+                            background: var(--lego-green);
+                            box-shadow:
+                                0 6px 0 #006b35,
+                                0 10px 20px rgba(0, 0, 0, 0.3);
+                        "
+                    >
+                        <div class="stat-number">∞</div>
+                        <div class="stat-label">Créativité</div>
+                    </div>
+                </div>
 
-    <div class="hero-stats">
-      <div class="stat-brick">
-        <div class="stat-number" id="totalGames">29</div>
-        <div class="stat-label">Jeux LEGO</div>
-      </div>
-      <div class="stat-brick" style="background:var(--lego-blue);box-shadow:0 6px 0 #004a80,0 10px 20px rgba(0,0,0,.3)">
-        <div class="stat-number">1932</div>
-        <div class="stat-label">Fondation</div>
-      </div>
-      <div class="stat-brick" style="background:var(--lego-green);box-shadow:0 6px 0 #006b35,0 10px 20px rgba(0,0,0,.3)">
-        <div class="stat-number">∞</div>
-        <div class="stat-label">Créativité</div>
-      </div>
-    </div>
+                <div class="scroll-hint">
+                    ▼ &nbsp; Découvrir les jeux &nbsp; ▼
+                </div>
+            </div>
+        </section>
 
-    <div class="scroll-hint">▼ &nbsp; Découvrir les jeux &nbsp; ▼</div>
-  </div>
-</section>
+        <div class="brick-divider"></div>
+        <div class="brick-divider red"></div>
+        <div class="brick-divider blue"></div>
 
-<div class="brick-divider"></div>
-<div class="brick-divider red"></div>
-<div class="brick-divider blue"></div>
+        <!-- GAMES SECTION -->
+        <section id="games">
+            <div class="section-header">
+                <div class="section-tag">🎮 CATALOGUE COMPLET</div>
+                <h2 class="section-title">TOUS LES JEUX LEGO® STEAM</h2>
+            </div>
+            <div class="games-grid" id="gamesGrid">
+                <!-- Cards injected by JS -->
+            </div>
+        </section>
 
-<!-- GAMES SECTION -->
-<section id="games">
-  <div class="section-header">
-    <div class="section-tag">🎮 CATALOGUE COMPLET</div>
-    <h2 class="section-title">TOUS LES JEUX LEGO® STEAM</h2>
-  </div>
-  <div class="games-grid" id="gamesGrid">
-    <!-- Cards injected by JS -->
-  </div>
-</section>
+        <div class="brick-divider blue"></div>
+        <div class="brick-divider red"></div>
+        <div class="brick-divider"></div>
 
-<div class="brick-divider blue"></div>
-<div class="brick-divider red"></div>
-<div class="brick-divider"></div>
+        <!-- FOOTER -->
+        <footer>
+            <div class="footer-logo">LEGO®</div>
+            <p class="footer-text">
+                Ce site est un projet <strong>fan-made</strong> non officiel.<br />
+                LEGO® est une marque déposée du Groupe LEGO. Steam® est une
+                marque d'<strong>Valve Corporation</strong>.<br />
+                Données récupérées via l'<strong>API officielle Steam</strong>.
+            </p>
+            <a
+                href="https://github.com/Yokasashii"
+                target="_blank"
+                class="footer-github"
+            >
+                <svg width="20" height="20" viewBox="0 0 24 24">
+                    <path
+                        d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12"
+                    />
+                </svg>
+                Fait par Yokasashi
+            </a>
+            <p class="footer-copy">
+                © 2025 — Fan project — Toutes les marques appartiennent à leurs
+                propriétaires respectifs.
+            </p>
+        </footer>
 
-<!-- FOOTER -->
-<footer>
-  <div class="footer-logo">LEGO®</div>
-  <p class="footer-text">
-    Ce site est un projet <strong>fan-made</strong> non officiel.<br>
-    LEGO® est une marque déposée du Groupe LEGO. Steam® est une marque d'<strong>Valve Corporation</strong>.<br>
-    Données récupérées via l'<strong>API officielle Steam</strong>.
-  </p>
-  <a href="https://github.com/Yokasashii" target="_blank" class="footer-github">
-    <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12"/></svg>
-    Fait par Yokasashi
-  </a>
-  <p class="footer-copy">© 2025 — Fan project — Toutes les marques appartiennent à leurs propriétaires respectifs.</p>
-</footer>
+        <!-- MODAL -->
+        <div id="modal-overlay">
+            <div id="modal">
+                <div class="modal-hero" id="modalHero">
+                    <div class="modal-hero-gradient"></div>
+                    <button class="modal-close" id="modalClose">✕</button>
+                </div>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title-block">
+                            <div class="modal-series" id="modalSeries"></div>
+                            <h2 class="modal-title" id="modalTitle"></h2>
+                        </div>
+                        <a
+                            href="#"
+                            class="steam-btn"
+                            id="modalSteamLink"
+                            target="_blank"
+                        >
+                            <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                            >
+                                <path
+                                    d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.6 0 12 0zm5.7 8.8c-.4 0-.8-.2-1.1-.4L12 5.7 7.4 8.4c-.3.2-.7.4-1.1.4-1.3 0-2.3-1-2.3-2.3s1-2.3 2.3-2.3c.4 0 .8.1 1.2.3l3.5 2v-2c0-1.3 1-2.3 2.3-2.3h.2c1.3 0 2.3 1 2.3 2.3s-1.1 2.3-2.1 2.3z"
+                                />
+                            </svg>
+                            Voir sur Steam
+                        </a>
+                    </div>
+                    <div class="modal-description" id="modalDesc"></div>
 
-<!-- MODAL -->
-<div id="modal-overlay">
-  <div id="modal">
-    <div class="modal-hero" id="modalHero">
-      <div class="modal-hero-gradient"></div>
-      <button class="modal-close" id="modalClose">✕</button>
-    </div>
-    <div class="modal-content">
-      <div class="modal-header">
-        <div class="modal-title-block">
-          <div class="modal-series" id="modalSeries"></div>
-          <h2 class="modal-title" id="modalTitle"></h2>
+                    <div id="modalTrailerSection">
+                        <div class="modal-section-title">🎬 Trailer</div>
+                        <div class="trailer-wrap" id="modalTrailer"></div>
+                    </div>
+
+                    <div id="modalScreensSection">
+                        <div class="modal-section-title">📸 Screenshots</div>
+                        <div
+                            class="screenshots-grid"
+                            id="modalScreenshots"
+                        ></div>
+                    </div>
+
+                    <div id="modalAchievSection">
+                        <div class="modal-section-title">🏆 Succès Steam</div>
+                        <div id="modalAchievements"></div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <a href="#" class="steam-btn" id="modalSteamLink" target="_blank">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.6 0 12 0zm5.7 8.8c-.4 0-.8-.2-1.1-.4L12 5.7 7.4 8.4c-.3.2-.7.4-1.1.4-1.3 0-2.3-1-2.3-2.3s1-2.3 2.3-2.3c.4 0 .8.1 1.2.3l3.5 2v-2c0-1.3 1-2.3 2.3-2.3h.2c1.3 0 2.3 1 2.3 2.3s-1.1 2.3-2.1 2.3z"/></svg>
-          Voir sur Steam
-        </a>
-      </div>
-      <div class="modal-description" id="modalDesc"></div>
 
-      <div id="modalTrailerSection">
-        <div class="modal-section-title">🎬 Trailer</div>
-        <div class="trailer-wrap" id="modalTrailer"></div>
-      </div>
+        <input type="email" id="email" />
+        <input type="password" id="password" />
 
-      <div id="modalScreensSection">
-        <div class="modal-section-title">📸 Screenshots</div>
-        <div class="screenshots-grid" id="modalScreenshots"></div>
-      </div>
+        <button onclick="loginUser()">Login</button>
 
-      <div id="modalAchievSection">
-        <div class="modal-section-title">🏆 Succès Steam</div>
-        <div id="modalAchievements"></div>
-      </div>
-    </div>
-  </div>
-</div>
+        <!-- loginUser is handled by script.js. Inline handler removed to ensure Supabase client initializes correctly before usage. -->
 
-<!-- TOOLTIP -->
-<div id="tooltip"></div>
-<!-- NOTIFICATION -->
-<div id="notif">
-  <span id="notifMsg"></span>
-</div>
+        <!-- TOOLTIP -->
+        <div id="tooltip"></div>
+        <!-- NOTIFICATION -->
+        <div id="notif">
+            <span id="notifMsg"></span>
+        </div>
 
-<script src="script.js"></script>
-</body>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+        <script src="script.js"></script>
+    </body>
 </html>
