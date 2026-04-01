@@ -15,6 +15,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -22,6 +23,15 @@ var (
 	PORT          string
 	dbConn        *pgx.Conn
 	httpClient    *http.Client
+
+	// In-memory admin tokens map (token -> username)
+	adminTokens = map[string]string{}
+)
+
+const (
+	// Local default admin credentials (local quick login)
+	adminDefaultUser = "Vincent"
+	adminDefaultPass = "Root"
 )
 
 // Réponses / modèles
@@ -85,12 +95,24 @@ func main() {
 	} else {
 		defer dbConn.Close(context.Background())
 		log.Printf("✅ Base de données connectée avec succès")
+
+		// Ensure required tables exist
+		if err := ensureGamesTable(); err != nil {
+			log.Printf("⚠️  Échec création/verification de la table games: %v", err)
+		}
+		if err := ensureAdminsTable(); err != nil {
+			log.Printf("⚠️  Échec création/verification de la table admins: %v", err)
+		}
 	}
 
 	// Enable CORS for all routes
 	http.HandleFunc("/", enableCORS(serveStaticFiles))
 	http.HandleFunc("/api/game/", enableCORS(handleGameDetails))
 	http.HandleFunc("/api/achievements/", enableCORS(handleAchievements))
+	// DB-backed games list and simple admin endpoints
+	http.HandleFunc("/api/games", enableCORS(handleGamesList))
+	http.HandleFunc("/api/admin/login", enableCORS(handleAdminLogin))
+	http.HandleFunc("/api/admin/add_game", enableCORS(handleAdminAddGame))
 
 	log.Printf("🧱 LEGO Games Wiki - Backend Golang")
 	log.Printf("🚀 Serveur démarré sur http://localhost:%s", PORT)
@@ -109,6 +131,18 @@ func initDB() error {
 		return fmt.Errorf("DATABASE_URL non définie")
 	}
 
+	// If the DATABASE_URL contains a placeholder like YOUR_PASSWORD or [YOUR-PASSWORD],
+	// substitute it with the DB_PASSWORD environment variable (URL-encoded) so secrets are kept in .env.
+	if strings.Contains(databaseURL, "YOUR_PASSWORD") || strings.Contains(databaseURL, "[YOUR-PASSWORD]") {
+		dbPass := os.Getenv("DB_PASSWORD")
+		if dbPass == "" {
+			return fmt.Errorf("DATABASE_URL contient un placeholder pour le mot de passe mais DB_PASSWORD n'est pas défini")
+		}
+		// Use url.PathEscape to safely encode special characters in the password
+		databaseURL = strings.ReplaceAll(databaseURL, "YOUR_PASSWORD", url.PathEscape(dbPass))
+		databaseURL = strings.ReplaceAll(databaseURL, "[YOUR-PASSWORD]", url.PathEscape(dbPass))
+	}
+
 	// On essaye de parser l'URL pour donner des messages plus précis si elle est mal formée
 	if _, err := url.Parse(databaseURL); err != nil {
 		return fmt.Errorf("DATABASE_URL invalide: %w", err)
@@ -118,19 +152,28 @@ func initDB() error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbConnectTimeout)
 	defer cancel()
 
-	conn, err := pgx.Connect(ctx, databaseURL)
+	cfg, err := pgx.ParseConfig(databaseURL)
+	if err != nil {
+		return fmt.Errorf("DATABASE_URL invalide pour pgx: %w", err)
+	}
+
+	// Supabase pooler (PgBouncer) compatibility:
+	// avoid prepared statement cache conflicts like:
+	// "prepared statement ... already exists" (SQLSTATE 42P05)
+	cfg.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+
+	conn, err := pgx.ConnectConfig(ctx, cfg)
 	if err != nil {
 		return fmt.Errorf("échec de connexion à la base de données: %w", err)
 	}
 
-	// Test de la connexion
-	var version string
-	if err := conn.QueryRow(ctx, "SELECT version()").Scan(&version); err != nil {
+	// Test minimal de la connexion (compatible pooler, sans prepared statement)
+	if _, err := conn.Exec(ctx, "SELECT 1"); err != nil {
 		conn.Close(context.Background())
-		return fmt.Errorf("échec de la requête de test: %w", err)
+		return fmt.Errorf("échec du test de connexion DB: %w", err)
 	}
 
-	log.Printf("🗄️  PostgreSQL connecté: %s", version)
+	log.Printf("🗄️  PostgreSQL connecté (test SELECT 1 OK)")
 	dbConn = conn
 	return nil
 }
@@ -412,4 +455,219 @@ func logJSONParseError(kind string, body []byte, parseErr error) {
 		trimmed = trimmed[:maxJSONBodyLogLength] + "...(truncated)"
 	}
 	log.Printf("❌ Erreur parsing JSON (%s): %v -- body: %s", kind, parseErr, trimmed)
+}
+
+
+
+// ensureGamesTable creates the games table if it doesn't exist
+func ensureGamesTable() error {
+	if dbConn == nil {
+		return fmt.Errorf("db non initialisée")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	create := `CREATE TABLE IF NOT EXISTS public.games (
+		id SERIAL PRIMARY KEY,
+		title TEXT NOT NULL,
+		subtitle TEXT,
+		series TEXT,
+		tag TEXT,
+		appid INTEGER DEFAULT 0
+	);`
+
+	if _, err := dbConn.Exec(ctx, create); err != nil {
+		return fmt.Errorf("échec création table games: %w", err)
+	}
+	return nil
+}
+
+// ensureAdminsTable creates the admins table and inserts default admin if missing
+func ensureAdminsTable() error {
+	if dbConn == nil {
+		return fmt.Errorf("db non initialisée")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	create := `CREATE TABLE IF NOT EXISTS public.admins (
+		id SERIAL PRIMARY KEY,
+		username TEXT UNIQUE NOT NULL,
+		password_hash TEXT
+	);`
+
+	if _, err := dbConn.Exec(ctx, create); err != nil {
+		return fmt.Errorf("échec création table admins: %w", err)
+	}
+
+	// Ensure password_hash column exists and backfill from legacy plaintext column if present
+	if _, err := dbConn.Exec(ctx, "ALTER TABLE public.admins ADD COLUMN IF NOT EXISTS password_hash TEXT"); err != nil {
+		return fmt.Errorf("échec ajout colonne password_hash: %w", err)
+	}
+	if _, err := dbConn.Exec(ctx, "UPDATE public.admins SET password_hash = password WHERE password_hash IS NULL AND password IS NOT NULL"); err != nil {
+		return fmt.Errorf("échec migration ancien mot de passe vers password_hash: %w", err)
+	}
+
+	// Ensure default admin exists — store a bcrypt hash of the password instead of plaintext
+	var exists bool
+	if err := dbConn.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM public.admins WHERE username=$1)", adminDefaultUser).Scan(&exists); err != nil {
+		// if the check fails, log and continue (we don't want startup to crash on a minor check)
+		log.Printf("⚠️  Impossible de vérifier l'existence de l'admin par défaut: %v", err)
+	} else if !exists {
+		// generate bcrypt hash
+		hash, err := bcrypt.GenerateFromPassword([]byte(adminDefaultPass), bcrypt.DefaultCost)
+		if err != nil {
+			return fmt.Errorf("échec génération hash mot de passe admin: %w", err)
+		}
+		if _, err := dbConn.Exec(ctx, "INSERT INTO public.admins (username, password) VALUES ($1,$2)", adminDefaultUser, string(hash)); err != nil {
+			return fmt.Errorf("échec insertion admin par défaut: %w", err)
+		}
+		log.Printf("ℹ️  Compte admin '%s' créé (mot de passe par défaut fourni)", adminDefaultUser)
+	}
+	// ignore errors from select/insert above to avoid failing startup for small issues
+	return nil
+}
+
+// handleGamesList returns games from the DB as JSON
+func handleGamesList(w http.ResponseWriter, r *http.Request) {
+	if dbConn == nil {
+		// return empty list instead of error
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode([]interface{}{})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := dbConn.Query(ctx, "SELECT id, title, subtitle, series, tag, appid FROM public.games ORDER BY id ASC")
+	if err != nil {
+		log.Printf("❌ erreur requête jeux: %v", err)
+		respondWithError(w, "Erreur lors de la récupération des jeux", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type DBGame struct {
+		ID       int64  `json:"id"`
+		Title    string `json:"title"`
+		Subtitle string `json:"subtitle"`
+		Series   string `json:"series"`
+		Tag      string `json:"tag"`
+		AppID    int64  `json:"appid"`
+	}
+
+	var games []DBGame
+	for rows.Next() {
+		var g DBGame
+		if err := rows.Scan(&g.ID, &g.Title, &g.Subtitle, &g.Series, &g.Tag, &g.AppID); err != nil {
+			log.Printf("❌ erreur lecture ligne jeux: %v", err)
+			continue
+		}
+		games = append(games, g)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(games)
+}
+
+// handleAdminLogin authenticates an admin (DB-backed or local default) and returns a token
+func handleAdminLogin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		respondWithError(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+		return
+	}
+	var creds struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
+		respondWithError(w, "Payload invalide", http.StatusBadRequest)
+		return
+	}
+	// local default admin
+	if creds.Username == adminDefaultUser && creds.Password == adminDefaultPass {
+		token := fmt.Sprintf("adm-%d", time.Now().UnixNano())
+		adminTokens[token] = creds.Username
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "token": token})
+		return
+	}
+
+	// check DB admins if available: stored password is a bcrypt hash
+	if dbConn != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		var storedHash string
+		err := dbConn.QueryRow(ctx, "SELECT password_hash FROM public.admins WHERE username=$1", creds.Username).Scan(&storedHash)
+		if err == nil {
+			// Compare bcrypt hash
+			if bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(creds.Password)) == nil {
+				token := fmt.Sprintf("adm-%d", time.Now().UnixNano())
+				adminTokens[token] = creds.Username
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "token": token})
+				return
+			}
+		}
+	}
+
+	respondWithError(w, "Identifiants invalides", http.StatusUnauthorized)
+}
+
+// helper to extract Bearer token
+func getBearerToken(r *http.Request) string {
+	auth := r.Header.Get("Authorization")
+	if auth == "" {
+		return ""
+	}
+	parts := strings.SplitN(auth, " ", 2)
+	if len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
+		return parts[1]
+	}
+	return ""
+}
+
+// handleAdminAddGame allows an authenticated admin to insert a new game into DB
+func handleAdminAddGame(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		respondWithError(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+		return
+	}
+	token := getBearerToken(r)
+	username, ok := adminTokens[token]
+	if !ok || username == "" {
+		respondWithError(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var payload struct {
+		Title    string `json:"title"`
+		Subtitle string `json:"subtitle"`
+		Series   string `json:"series"`
+		Tag      string `json:"tag"`
+		AppID    int64  `json:"appid"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		respondWithError(w, "Payload invalide", http.StatusBadRequest)
+		return
+	}
+
+	if dbConn == nil {
+		respondWithError(w, "Base de données non disponible", http.StatusInternalServerError)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := dbConn.Exec(ctx, "INSERT INTO public.games (title, subtitle, series, tag, appid) VALUES ($1,$2,$3,$4,$5)", payload.Title, payload.Subtitle, payload.Series, payload.Tag, payload.AppID)
+	if err != nil {
+		log.Printf("❌ Erreur insertion jeu: %v", err)
+		respondWithError(w, "Erreur lors de l'ajout du jeu", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"success": true})
 }

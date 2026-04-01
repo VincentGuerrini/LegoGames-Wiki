@@ -165,8 +165,10 @@
     }
   }
 
-  // ----- Games and UI (kept mostly compatible with original) -----
-  const GAMES = [
+  // ----- Games and UI (Supabase-backed) -----
+  // GAMES will be populated from Supabase `games` table. Each row expected to have:
+  // id (primary), title, subtitle, series, tag, appid (steam app id or 0 for placeholder)
+  const DEFAULT_GAMES = [
     {
       id: 32440,
       title: "LEGO® Star Wars™",
@@ -400,6 +402,213 @@
       appid: 0,
     },
   ];
+  let GAMES = [...DEFAULT_GAMES];
+
+  // Load games from backend /api/games (falls back to local data if backend unavailable)
+  async function loadGamesFromSupabase() {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/games`);
+      if (!res.ok) {
+        console.warn("Erreur récupération /api/games:", res.status);
+        showNotif(
+          "Impossible de charger la liste de jeux depuis le serveur, affichage local",
+        );
+        GAMES = [...DEFAULT_GAMES];
+        buildGamesGrid();
+        return;
+      }
+      const data = await res.json();
+      if (!data || data.length === 0) {
+        GAMES = [...DEFAULT_GAMES];
+        buildGamesGrid();
+        return;
+      }
+      // Map server rows into GAMES array
+      GAMES = data.map((r) => ({
+        id: r.id,
+        title: r.title,
+        subtitle: r.subtitle,
+        series: r.series,
+        tag: r.tag,
+        appid: r.appid || 0,
+      }));
+      buildGamesGrid();
+    } catch (e) {
+      console.error("loadGamesFromSupabase (backend) error:", e);
+      showNotif("Erreur lors du chargement des jeux depuis le serveur");
+      GAMES = [...DEFAULT_GAMES];
+      buildGamesGrid();
+    }
+  }
+
+  // Insert a new game via backend endpoint and refresh the grid
+  async function addGameToSupabase(game) {
+    try {
+      const token = localStorage.getItem("admin_token") || "";
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = "Bearer " + token;
+
+      const res = await fetch(`${API_BASE_URL}/api/admin/add_game`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(game),
+      });
+
+      if (!res.ok) {
+        let errMsg = `status ${res.status}`;
+        try {
+          const j = await res.json();
+          if (j && j.error) errMsg = j.error;
+        } catch (_) {}
+        console.error("Backend add game error:", errMsg);
+        showNotif("Erreur lors de l'ajout du jeu: " + errMsg);
+        return false;
+      }
+
+      showNotif("Jeu ajouté via backend");
+      await loadGamesFromSupabase();
+      return true;
+    } catch (e) {
+      console.error("addGameToSupabase (backend) error:", e);
+      showNotif("Erreur inattendue lors de l'ajout");
+      return false;
+    }
+  }
+
+  // Admin panel UI: visible only when admin logged in (see overridden login below)
+  function showAdminPanel() {
+    if (byId("adminPanel")) return;
+    const panel = document.createElement("div");
+    panel.id = "adminPanel";
+    panel.style.cssText =
+      "position:fixed;bottom:12px;left:12px;background:rgba(0,0,0,0.8);color:#fff;padding:12px;border-radius:8px;z-index:9999;min-width:280px;box-shadow:0 10px 40px rgba(0,0,0,0.6)";
+
+    panel.innerHTML = `
+      <div style="font-weight:700;margin-bottom:8px">Admin — Ajouter un jeu</div>
+      <input id="admin_title" placeholder="Titre" style="width:100%;margin-bottom:6px;padding:6px"/>
+      <input id="admin_subtitle" placeholder="Sous-titre" style="width:100%;margin-bottom:6px;padding:6px"/>
+      <input id="admin_series" placeholder="Série (ex: Star Wars)" style="width:100%;margin-bottom:6px;padding:6px"/>
+      <input id="admin_tag" placeholder="Tag (action, aventure...)" style="width:100%;margin-bottom:6px;padding:6px"/>
+      <input id="admin_appid" placeholder="Steam appid (0 pour placeholder)" style="width:100%;margin-bottom:6px;padding:6px"/>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button id="adminAddBtn" style="padding:6px 10px;border-radius:6px;border:none;background:var(--lego-yellow);font-weight:700">Ajouter</button>
+        <button id="adminCloseBtn" style="padding:6px 10px;border-radius:6px;border:none;background:#444;color:#fff">Fermer</button>
+      </div>
+    `;
+
+    document.body.appendChild(panel);
+
+    byId("adminCloseBtn").onclick = () => panel.remove();
+    byId("adminAddBtn").onclick = async () => {
+      const title = byId("admin_title").value.trim();
+      const subtitle = byId("admin_subtitle").value.trim();
+      const series = byId("admin_series").value.trim();
+      const tag = byId("admin_tag").value.trim() || "action";
+      const appid = parseInt(byId("admin_appid").value.trim() || "0", 10) || 0;
+
+      if (!title || !series) {
+        showNotif("Titre et série requis");
+        return;
+      }
+
+      // Build game payload - DB should assign id if serial
+      const game = {
+        title,
+        subtitle,
+        series,
+        tag,
+        appid,
+      };
+
+      const ok = await addGameToSupabase(game);
+      if (ok) {
+        // clear inputs
+        byId("admin_title").value = "";
+        byId("admin_subtitle").value = "";
+        byId("admin_series").value = "";
+        byId("admin_tag").value = "";
+        byId("admin_appid").value = "";
+      }
+    };
+  }
+
+  // Override global loginUser to try backend admin login first, fallback to local admin and then to original
+  (function overrideLoginUser() {
+    const originalLoginUser = window.loginUser;
+    window.loginUser = async function () {
+      const email = byId("email")?.value || "";
+      const password = byId("password")?.value || "";
+
+      // Try backend admin login endpoint
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: email, password }),
+        });
+        if (res.ok) {
+          const j = await res.json();
+          if (j && j.token) {
+            // store token client-side for subsequent admin requests
+            localStorage.setItem("admin_token", j.token);
+            isAdmin = true;
+            showNotif("Admin connecté (backend)");
+            showAdminPanel();
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("Backend admin login failed:", e);
+      }
+
+      // Hardcoded local admin credential (fallback)
+      if (email === "Vincent" && password === "Root") {
+        isAdmin = true;
+        // store a local marker token so admin actions use a value (backend endpoints won't accept it)
+        localStorage.setItem("admin_token", "local-admin");
+        showNotif("Admin connecté (Vincent)");
+        showAdminPanel();
+        return;
+      }
+
+      // fallback to original login (Supabase)
+      if (typeof originalLoginUser === "function") {
+        return originalLoginUser();
+      }
+    };
+  })();
+
+  // Ensure we initialize Supabase client then load games from DB after DOM ready
+  window.addEventListener("DOMContentLoaded", async () => {
+    // Initialize Supabase client (project URL and publishable key)
+    try {
+      const SUPABASE_URL = "https://sllxqbnjofnzabeidphe.supabase.co";
+      const SUPABASE_KEY = "sb_publishable_qvGzCLc9i0gLKEPnGk27Bg_GM99NVOh";
+      if (typeof supabase !== "undefined" && supabase.createClient) {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        console.log("✅ Supabase client initialized");
+      } else {
+        console.warn(
+          "⚠️ Supabase library not found — falling back to local data",
+        );
+      }
+    } catch (err) {
+      console.error("❌ Failed to initialize Supabase client:", err);
+    }
+
+    // Now load games from Supabase (or fallback)
+    try {
+      if (typeof loadGamesFromSupabase === "function") {
+        await loadGamesFromSupabase();
+      } else {
+        // Fallback: build grid from whatever GAMES is set to
+        if (typeof buildGamesGrid === "function") buildGamesGrid();
+      }
+    } catch (e) {
+      console.error("Error while loading games:", e);
+      if (typeof buildGamesGrid === "function") buildGamesGrid();
+    }
+  });
 
   const SERIES_COLORS = {
     "Star Wars": "#ffe81f",
